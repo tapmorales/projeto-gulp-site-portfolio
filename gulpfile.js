@@ -8,6 +8,7 @@ const uglify = require('gulp-uglify');
 const browsersync = require('browser-sync').create();
 const usemin = require('gulp-usemin');
 const purgecss = require('gulp-purgecss');
+const include = require('gulp-file-include')
 
 function watchFiles(){
     
@@ -20,13 +21,16 @@ function sass(){
 }
 
 function html(){
-    return gulp.src('./src/**/*.html')
+    return gulp.src(['./src/**/*.html', '!src/inc/**/*'])
+        .pipe(include())
         .pipe(usemin({
             css: [function(){
                 return purgecss({
-                    content: ['./src/**/*.html']
+                    content: ['./src/**/*.html'],
+                    whitelist: ['js', 'no-js', 'menu-opened']
                 })
-            }]
+            }],
+            js: [uglify]
         }))
         .pipe(gulp.dest('./dist'))
 }
