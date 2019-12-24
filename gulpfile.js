@@ -1,23 +1,16 @@
 const gulp = require('gulp');
 const gulpsass = require('gulp-sass');
-const cssnano = require('gulp-cssnano');
 const sourcemaps = require('gulp-sourcemaps');
 const del = require('del');
 const imagemin = require('gulp-imagemin');
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify');
-
-// gulp.task('sass', function(cb){
-    // gulp.src('./src/scss/main.scss')
-    //     .pipe(sass())
-    //     .pipe(gulp.dest('./dist/css'))
-    //     cb()
-// })
-
-// gulp.task('default', gulp.series('sass'))
+const browsersync = require('browser-sync').create();
+const usemin = require('gulp-usemin');
+const purgecss = require('gulp-purgecss');
 
 function watchFiles(){
-    gulp.watch('./src/scss/**/*.scss', sass)
+    
 }
 
 function sass(){
@@ -25,5 +18,49 @@ function sass(){
         .pipe(gulpsass())
         .pipe(gulp.dest('./src/css'))
 }
-exports.default = sass;
+
+function html(){
+    return gulp.src('./src/**/*.html')
+        .pipe(usemin({
+            css: [function(){
+                return purgecss({
+                    content: ['./src/**/*.html']
+                })
+            }]
+        }))
+        .pipe(gulp.dest('./dist'))
+}
+
+function imagens(){
+    return gulp.src('./src/imagens/**/*')
+        .pipe(gulp.dest('./dist/imagens'))
+}
+
+function server(){
+    // browsersync.init({
+    //     server: './dist/'
+    // })
+
+    browsersync.init({
+        server: {
+            baseDir: './dist',
+            routes: {
+                '/node_modules': './node_modules'
+            }
+        }
+    })
+
+    gulp.watch('./src/scss/**/*.scss', sass)
+    gulp.watch('./src/**/*.html', html)
+    gulp.watch('./src/imagens/**/*', imagens)
+
+    gulp.watch('./dist/**/*').on('change', browsersync.reload)
+}
+
+function clean() {
+    return del('./dist/')
+}
+// exports.default = gulp.parallel(sass, html, imagens);
+exports.default = gulp.series(clean, gulp.parallel(sass, imagens), html)
+exports.server = server;
 exports.watch = watchFiles;
